@@ -7,29 +7,17 @@ import win_unicode_console
 from colorama import init, Fore, Style
 
 # Basic settings
+NODES_FILE = "nodes.txt" # Noedes list file
 BDIX_PING = 15 # Maximum ping for bdix connections
-NODES = ["dhakacom.com", "naturalbd.com", "mojaloss.net"] # Nodes to check against
-PING_COUNT = 2 # No. of pings per node
+PING_COUNT = 3 # No. of pings per node
 
 # Ping
-def ping():
+def ping(node):
     try:
-        print(Fore.WHITE + "\nChecking ping...")
-        results = []
-        for i in NODES:
-            try:
-                result = int(os.popen("ping -n {} {}".format(PING_COUNT, i)).read().strip().split("Average = ")[1][:-2])
-                results.append(result)
-            except:
-                print(Fore.RED + "Network error.")
-                return 0
-
-        result = sum(results) / len(results)
+        result = int(os.popen("ping -n {} {}".format(PING_COUNT, node)).read().strip().split("Average = ")[1][:-2])
         return result
-
-    except Exception as e:
-        print(Fore.RED + "Unpexted error: {}".format(e))
-        return 0
+    except:
+        return
 
 if __name__ == "__main__":
     win_unicode_console.enable()
@@ -44,13 +32,33 @@ if __name__ == "__main__":
 
         print(Fore.YELLOW + "Credit: ιηvαδεя & sιlvεя jαςκαl".center(terminal_width))
 
-        result = ping()
-
-        if result == 0:
+        if not os.path.exists(NODES_FILE):
+            print(Fore.RED + "Nodes file not found. Make sure you have the {} file in the same directory as this tool.".format(NODES_FILE))
             input(Fore.WHITE + "\nPress Enter to Exit.")
             sys.exit()
 
-        if result <= BDIX_PING:
+        print(Fore.WHITE + "\nChecking ping...")
+        results = []
+        with open(NODES_FILE) as f:
+            nodes = [x for x in f.read().split("\n") if x]
+            for node in nodes:
+                result = ping(node)
+                if result:
+                    results.append(result)
+
+        if len(results) == 0:
+            print(Fore.RED + "Network error.")
+            input(Fore.WHITE + "\nPress Enter to Exit.")
+            sys.exit()
+
+        avg_result = sum(results) / len(results)
+
+        if avg_result == 0:
+            print(Fore.RED + "Network error.")
+            input(Fore.WHITE + "\nPress Enter to Exit.")
+            sys.exit()
+
+        if avg_result <= BDIX_PING:
             print(Fore.GREEN + "\nCongratulation, your internet is connected to BDIX!")
 
         else:
